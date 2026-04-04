@@ -1,0 +1,23 @@
+import { IsString, IsNotEmpty, IsOptional, MinLength } from 'class-validator';
+
+export class CreateCategoryDto {
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(2)
+  name: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+}
+
+export class UpdateCategoryDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+}
