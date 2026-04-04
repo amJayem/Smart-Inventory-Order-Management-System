@@ -22,7 +22,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  orders    Order[]
+  orders       Order[]
+  activityLogs ActivityLog[]
 
   @@map("users")
 }
@@ -118,4 +119,35 @@ model RestockQueue {
   product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@map("restock_queue")
+}
+
+enum ActivityAction {
+  ORDER_CREATED
+  ORDER_UPDATED
+  ORDER_CANCELLED
+  ORDER_STATUS_CHANGED
+  PRODUCT_ADDED
+  PRODUCT_UPDATED
+  PRODUCT_DELETED
+  STOCK_UPDATED
+  RESTOCK_QUEUE_ADDED
+  RESTOCK_QUEUE_REMOVED
+  USER_CREATED
+  USER_ROLE_CHANGED
+  CATEGORY_CREATED
+  CATEGORY_UPDATED
+  CATEGORY_DELETED
+}
+
+model ActivityLog {
+  id          String         @id @default(uuid())
+  action      ActivityAction
+  description String
+  userId      String?
+  metadata    Json?
+  createdAt   DateTime       @default(now())
+
+  user        User?          @relation(fields: [userId], references: [id])
+
+  @@map("activity_logs")
 }
