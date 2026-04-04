@@ -4,7 +4,11 @@ import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 
 async function main() {
-  const client = new Client({ connectionString: process.env.DATABASE_URL, ssl: false });
+  const isProduction = process.env.NODE_ENV === 'production';
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: isProduction ? { rejectUnauthorized: false } : false,
+  });
   await client.connect();
   console.log('Connected to database.');
 
