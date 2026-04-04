@@ -1,13 +1,14 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter } as any);
 
 async function main() {
   console.log('Seeding database...');
 
-  // Demo admin user
   const hashedPassword = await bcrypt.hash('demo1234', 10);
   const admin = await prisma.user.upsert({
     where: { email: 'demo@admin.com' },
@@ -22,7 +23,6 @@ async function main() {
   });
   console.log('✓ Demo admin created:', admin.email);
 
-  // Categories
   const electronics = await prisma.category.upsert({
     where: { name: 'Electronics' },
     update: {},
@@ -40,50 +40,14 @@ async function main() {
   });
   console.log('✓ Categories created');
 
-  // Products
   await prisma.product.createMany({
     skipDuplicates: true,
     data: [
-      {
-        name: 'iPhone 13',
-        categoryId: electronics.id,
-        price: 799.99,
-        stock: 3,
-        minStockThreshold: 5,
-        status: 'ACTIVE',
-      },
-      {
-        name: 'Wireless Headphones',
-        categoryId: electronics.id,
-        price: 149.99,
-        stock: 15,
-        minStockThreshold: 5,
-        status: 'ACTIVE',
-      },
-      {
-        name: 'T-Shirt',
-        categoryId: clothing.id,
-        price: 19.99,
-        stock: 20,
-        minStockThreshold: 10,
-        status: 'ACTIVE',
-      },
-      {
-        name: 'Running Shoes',
-        categoryId: clothing.id,
-        price: 89.99,
-        stock: 0,
-        minStockThreshold: 5,
-        status: 'OUT_OF_STOCK',
-      },
-      {
-        name: 'Organic Coffee',
-        categoryId: grocery.id,
-        price: 12.99,
-        stock: 50,
-        minStockThreshold: 20,
-        status: 'ACTIVE',
-      },
+      { name: 'iPhone 13', categoryId: electronics.id, price: 799.99, stock: 3, minStockThreshold: 5, status: 'ACTIVE' },
+      { name: 'Wireless Headphones', categoryId: electronics.id, price: 149.99, stock: 15, minStockThreshold: 5, status: 'ACTIVE' },
+      { name: 'T-Shirt', categoryId: clothing.id, price: 19.99, stock: 20, minStockThreshold: 10, status: 'ACTIVE' },
+      { name: 'Running Shoes', categoryId: clothing.id, price: 89.99, stock: 0, minStockThreshold: 5, status: 'OUT_OF_STOCK' },
+      { name: 'Organic Coffee', categoryId: grocery.id, price: 12.99, stock: 50, minStockThreshold: 20, status: 'ACTIVE' },
     ],
   });
   console.log('✓ Products created');
