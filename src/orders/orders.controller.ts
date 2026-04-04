@@ -34,17 +34,17 @@ export class OrdersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateOrderDto) {
-    return this.ordersService.update(id, dto);
+  update(@Param('id') id: string, @Body() dto: UpdateOrderDto, @CurrentUser() user: any) {
+    return this.ordersService.update(id, dto, user.id);
   }
 
   @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Body() dto: UpdateOrderStatusDto) {
-    return this.ordersService.updateStatus(id, dto);
+  updateStatus(@Param('id') id: string, @Body() dto: UpdateOrderStatusDto, @CurrentUser() user: any) {
+    return this.ordersService.updateStatus(id, dto, user.id);
   }
 
   @Delete(':id')
-  cancel(@Param('id') id: string) {
-    return this.ordersService.cancel(id);
+  cancel(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.ordersService.cancel(id, user.id);
   }
 }

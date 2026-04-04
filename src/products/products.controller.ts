@@ -7,6 +7,7 @@ import { CreateProductDto, UpdateProductDto, RestockProductDto } from './dto/pro
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Role } from '@prisma/client';
 
 @UseGuards(JwtAuthGuard)
@@ -32,26 +33,26 @@ export class ProductsController {
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @Post()
-  create(@Body() dto: CreateProductDto) {
-    return this.productsService.create(dto);
+  create(@Body() dto: CreateProductDto, @CurrentUser() user: any) {
+    return this.productsService.create(dto, user.id);
   }
 
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
-    return this.productsService.update(id, dto);
+  update(@Param('id') id: string, @Body() dto: UpdateProductDto, @CurrentUser() user: any) {
+    return this.productsService.update(id, dto, user.id);
   }
 
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.productsService.remove(id);
+  remove(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.productsService.remove(id, user.id);
   }
 
   @Patch(':id/restock')
-  restock(@Param('id') id: string, @Body() dto: RestockProductDto) {
-    return this.productsService.restock(id, dto);
+  restock(@Param('id') id: string, @Body() dto: RestockProductDto, @CurrentUser() user: any) {
+    return this.productsService.restock(id, dto, user.id);
   }
 }

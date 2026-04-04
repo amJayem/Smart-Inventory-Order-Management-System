@@ -3,6 +3,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProductsService } from '../products/products.service';
+import { ActivityService } from '../activity/activity.service';
 import { CreateOrderDto, UpdateOrderDto, UpdateOrderStatusDto } from './dto/order.dto';
 import { OrderStatus } from '@prisma/client';
 
@@ -13,6 +14,7 @@ export class OrdersService {
   constructor(
     private prisma: PrismaService,
     private productsService: ProductsService,
+    private activityService: ActivityService,
   ) {}
 
   async findAll(page = 1, limit = 10, status?: OrderStatus, search?: string) {
@@ -99,10 +101,16 @@ export class OrdersService {
       return created;
     });
 
+    await this.activityService.log({
+      action: 'ORDER_CREATED',
+      description: `Order ${order.orderNumber} created for customer "${order.customerName}" — $${order.totalPrice}`,
+      userId,
+    });
+
     return order;
   }
 
-  async update(id: string, dto: UpdateOrderDto) {
+  async update(id: string, dto: UpdateOrderDto, userId?: string) {
     const order = await this.findOne(id);
     if (LOCKED_STATUSES.includes(order.status))
       throw new ForbiddenException(`Order cannot be edited once it is ${order.status}`);
@@ -110,11 +118,17 @@ export class OrdersService {
       throw new ForbiddenException('Cancelled orders cannot be edited');
 
     if (!dto.items) {
-      return this.prisma.order.update({
+      const updated = await this.prisma.order.update({
         where: { id },
         data: { customerName: dto.customerName, notes: dto.notes },
         include: { items: { include: { product: { select: { id: true, name: true, price: true } } } } },
       });
+      await this.activityService.log({
+        action: 'ORDER_UPDATED',
+        description: `Order ${order.orderNumber} details updated`,
+        userId,
+      });
+      return updated;
     }
 
     const productIds = dto.items.map((i) => i.productId);
@@ -138,7 +152,7 @@ export class OrdersService {
       totalPrice += Number(product.price) * item.quantity;
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const updated = await this.prisma.$transaction(async (tx) => {
       for (const old of order.items) {
         await tx.product.update({ where: { id: old.productId }, data: { stock: { increment: old.quantity } } });
       }
@@ -165,28 +179,44 @@ export class OrdersService {
         include: { items: { include: { product: { select: { id: true, name: true, price: true } } } } },
       });
     });
+
+    await this.activityService.log({
+      action: 'ORDER_UPDATED',
+      description: `Order ${order.orderNumber} items updated — new total $${totalPrice}`,
+      userId,
+    });
+
+    return updated;
   }
 
-  async updateStatus(id: string, dto: UpdateOrderStatusDto) {
+  async updateStatus(id: string, dto: UpdateOrderStatusDto, userId?: string) {
     const order = await this.findOne(id);
     if (LOCKED_STATUSES.includes(order.status))
       throw new ForbiddenException(`Order status cannot be changed once it is ${order.status}`);
 
-    return this.prisma.order.update({
+    const updated = await this.prisma.order.update({
       where: { id },
       data: { status: dto.status },
       include: { items: { include: { product: { select: { id: true, name: true } } } } },
     });
+
+    await this.activityService.log({
+      action: 'ORDER_STATUS_CHANGED',
+      description: `Order ${order.orderNumber} status changed: ${order.status} → ${dto.status}`,
+      userId,
+    });
+
+    return updated;
   }
 
-  async cancel(id: string) {
+  async cancel(id: string, userId?: string) {
     const order = await this.findOne(id);
     if (LOCKED_STATUSES.includes(order.status))
       throw new ForbiddenException(`Cannot cancel an order that is already ${order.status}`);
     if (order.status === 'CANCELLED')
       throw new BadRequestException('Order is already cancelled');
 
-    return this.prisma.$transaction(async (tx) => {
+    const cancelled = await this.prisma.$transaction(async (tx) => {
       for (const item of order.items) {
         const product = await tx.product.update({
           where: { id: item.productId },
@@ -200,5 +230,13 @@ export class OrdersService {
         include: { items: { include: { product: { select: { id: true, name: true } } } } },
       });
     });
+
+    await this.activityService.log({
+      action: 'ORDER_CANCELLED',
+      description: `Order ${order.orderNumber} cancelled — stock restored for ${order.items.length} item(s)`,
+      userId,
+    });
+
+    return cancelled;
   }
 }
