@@ -36,3 +36,24 @@ model Category {
 
   @@map("categories")
 }
+
+enum ProductStatus {
+  ACTIVE
+  OUT_OF_STOCK
+}
+
+model Product {
+  id                String        @id @default(uuid())
+  name              String
+  categoryId        String
+  price             Decimal       @db.Decimal(10, 2)
+  stock             Int           @default(0)
+  minStockThreshold Int           @default(5)
+  status            ProductStatus @default(ACTIVE)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  category          Category      @relation(fields: [categoryId], references: [id])
+
+  @@map("products")
+}
