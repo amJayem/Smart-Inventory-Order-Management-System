@@ -57,6 +57,7 @@ model Product {
 
   category          Category      @relation(fields: [categoryId], references: [id])
   orderItems        OrderItem[]
+  restockQueue      RestockQueue?
 
   @@map("products")
 }
@@ -99,4 +100,22 @@ model OrderItem {
 
   @@unique([orderId, productId])
   @@map("order_items")
+}
+
+enum RestockPriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+model RestockQueue {
+  id        String          @id @default(uuid())
+  productId String          @unique
+  priority  RestockPriority
+  addedAt   DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("restock_queue")
 }
