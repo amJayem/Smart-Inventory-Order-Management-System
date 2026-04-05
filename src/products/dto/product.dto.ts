@@ -55,6 +55,12 @@ export class UpdateProductDto {
   @Type(() => Number)
   @IsInt()
   @Min(0)
+  stock?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
   minStockThreshold?: number;
 
   @IsOptional()

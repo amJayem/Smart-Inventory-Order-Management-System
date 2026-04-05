@@ -72,9 +72,14 @@ export class ProductsService {
       if (!category) throw new NotFoundException('Category not found');
     }
 
+    const updateData: any = { ...dto };
+    if (dto.stock !== undefined) {
+      updateData.status = dto.stock === 0 ? 'OUT_OF_STOCK' : 'ACTIVE';
+    }
+
     const updated = await this.prisma.product.update({
       where: { id },
-      data: dto,
+      data: updateData,
       include: { category: { select: { id: true, name: true } } },
     });
 
