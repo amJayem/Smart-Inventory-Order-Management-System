@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
@@ -8,12 +8,20 @@ import { RegisterDto, LoginDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
     private activityService: ActivityService,
   ) {}
+
+  private safeLog(params: Parameters<ActivityService['log']>[0]) {
+    this.activityService.log(params).catch((err) =>
+      this.logger.warn(`Activity log failed: ${err.message}`)
+    );
+  }
 
   async register(dto: RegisterDto) {
     const exists = await this.prisma.user.findUnique({ where: { email: dto.email } });
@@ -25,11 +33,7 @@ export class AuthService {
       select: { id: true, email: true, name: true, role: true },
     });
 
-    await this.activityService.log({
-      action: 'USER_CREATED',
-      description: `New user registered: ${user.name} (${user.email})`,
-      userId: user.id,
-    });
+    this.safeLog({ action: 'USER_CREATED', description: `New user registered: ${user.name} (${user.email})`, userId: user.id });
 
     return { user, token: this.signToken(user.id, user.email) };
   }
@@ -41,11 +45,7 @@ export class AuthService {
     const valid = await bcrypt.compare(dto.password, user.password);
     if (!valid) throw new UnauthorizedException('Invalid credentials');
 
-    await this.activityService.log({
-      action: 'USER_LOGGED_IN',
-      description: `${user.name} logged in`,
-      userId: user.id,
-    });
+    this.safeLog({ action: 'USER_LOGGED_IN', description: `${user.name} logged in`, userId: user.id });
 
     const { password: _, ...safeUser } = user;
     return { user: safeUser, token: this.signToken(user.id, user.email) };
@@ -56,11 +56,7 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { email: demoEmail } });
     if (!user) throw new UnauthorizedException('Demo account not available. Run the seed first.');
 
-    await this.activityService.log({
-      action: 'USER_LOGGED_IN',
-      description: `Demo account logged in`,
-      userId: user.id,
-    });
+    this.safeLog({ action: 'USER_LOGGED_IN', description: `Demo account logged in`, userId: user.id });
 
     const { password: _, ...safeUser } = user;
     return { user: safeUser, token: this.signToken(user.id, user.email) };
