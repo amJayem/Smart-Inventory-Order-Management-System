@@ -1,6 +1,6 @@
 import {
   IsString, IsNotEmpty, IsOptional, IsArray,
-  IsInt, Min, IsUUID, ValidateNested, IsEnum,
+  IsInt, Min, IsUUID, ValidateNested, IsEnum, IsEmail,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { OrderStatus } from '@prisma/client';
@@ -21,6 +21,18 @@ export class CreateOrderDto {
   customerName: string;
 
   @IsOptional()
+  @IsEmail()
+  customerEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  customerPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  customerAddress?: string;
+
+  @IsOptional()
   @IsString()
   notes?: string;
 
@@ -35,6 +47,18 @@ export class UpdateOrderDto {
   @IsString()
   @IsNotEmpty()
   customerName?: string;
+
+  @IsOptional()
+  @IsEmail()
+  customerEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  customerPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  customerAddress?: string;
 
   @IsOptional()
   @IsString()

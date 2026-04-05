@@ -28,7 +28,7 @@ export class OrdersService {
         where, skip, take: limit,
         include: {
           items: { include: { product: { select: { id: true, name: true, price: true } } } },
-          user: { select: { id: true, name: true } },
+          user: { select: { id: true, name: true, email: true } },
         },
         orderBy: { createdAt: 'desc' },
       }),
@@ -43,7 +43,7 @@ export class OrdersService {
       where: { id },
       include: {
         items: { include: { product: { select: { id: true, name: true, price: true, status: true } } } },
-        user: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true, email: true } },
       },
     });
     if (!order) throw new NotFoundException('Order not found');
@@ -77,6 +77,9 @@ export class OrdersService {
         data: {
           orderNumber,
           customerName: dto.customerName,
+          customerEmail: dto.customerEmail,
+          customerPhone: dto.customerPhone,
+          customerAddress: dto.customerAddress,
           notes: dto.notes,
           totalPrice,
           userId,
@@ -84,7 +87,7 @@ export class OrdersService {
         },
         include: {
           items: { include: { product: { select: { id: true, name: true, price: true } } } },
-          user: { select: { id: true, name: true } },
+          user: { select: { id: true, name: true, email: true } },
         },
       });
 
@@ -120,7 +123,13 @@ export class OrdersService {
     if (!dto.items) {
       const updated = await this.prisma.order.update({
         where: { id },
-        data: { customerName: dto.customerName, notes: dto.notes },
+        data: {
+          customerName: dto.customerName,
+          customerEmail: dto.customerEmail,
+          customerPhone: dto.customerPhone,
+          customerAddress: dto.customerAddress,
+          notes: dto.notes,
+        },
         include: { items: { include: { product: { select: { id: true, name: true, price: true } } } } },
       });
       await this.activityService.log({
@@ -172,6 +181,9 @@ export class OrdersService {
         where: { id },
         data: {
           customerName: dto.customerName,
+          customerEmail: dto.customerEmail,
+          customerPhone: dto.customerPhone,
+          customerAddress: dto.customerAddress,
           notes: dto.notes,
           totalPrice,
           items: { create: validatedItems },
