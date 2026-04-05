@@ -78,6 +78,8 @@ model Order {
   customerEmail   String?
   customerPhone   String?
   customerAddress String?
+  shippingAddress Json?
+  billingAddress  Json?
   status          OrderStatus @default(PENDING)
   totalPrice      Decimal     @db.Decimal(10, 2)
   userId          String

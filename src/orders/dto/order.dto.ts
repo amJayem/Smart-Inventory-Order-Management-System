@@ -5,6 +5,28 @@ import {
 import { Type } from 'class-transformer';
 import { OrderStatus } from '@prisma/client';
 
+export class AddressDto {
+  @IsOptional()
+  @IsString()
+  street?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  state?: string;
+
+  @IsOptional()
+  @IsString()
+  zip?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+}
+
 export class OrderItemDto {
   @IsUUID()
   productId: string;
@@ -33,6 +55,16 @@ export class CreateOrderDto {
   customerAddress?: string;
 
   @IsOptional()
+  @ValidateNested()
+  @Type(() => AddressDto)
+  shippingAddress?: AddressDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AddressDto)
+  billingAddress?: AddressDto;
+
+  @IsOptional()
   @IsString()
   notes?: string;
 
@@ -59,6 +91,16 @@ export class UpdateOrderDto {
   @IsOptional()
   @IsString()
   customerAddress?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AddressDto)
+  shippingAddress?: AddressDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AddressDto)
+  billingAddress?: AddressDto;
 
   @IsOptional()
   @IsString()
