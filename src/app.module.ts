@@ -9,6 +9,7 @@ import { RestockModule } from './restock/restock.module';
 import { ActivityModule } from './activity/activity.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { UsersModule } from './users/users.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { UsersModule } from './users/users.module';
     ActivityModule,
     DashboardModule,
     UsersModule,
+    SeedModule,
   ],
 })
 export class AppModule {}
